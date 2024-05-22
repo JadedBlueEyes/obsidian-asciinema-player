@@ -137,53 +137,18 @@ export default class AsciinemaPlayerPlugin extends Plugin {
 			//	body[0].appendChild(jsElement)
 			//}
 
+			// TODO: Only add script when note cotains asciinema
+			//
 			const scripts = document.querySelectorAll('script')
 			scripts[scripts.length-1].parentNode.insertBefore(jsElement, scripts[scripts.length-1].nextSibling)
 
-			this.registerMarkdownPostProcessor((el: HTMLElement) => {
-				el.querySelectorAll("img").forEach((img) => {
-					const matched = img.src.match(/asciinema:(?<filepath>.*\.cast)/)
-					if (matched) {
-						const allKnownFiles = this.app.vault.getFiles()
-						const allKnownFilePaths = allKnownFiles.map((file) => file.path)
-						const currentActiveFile = this.app.workspace.getActiveFile()
+			//
+			// registerMarkdownCodeBlockProcessor
+			//
+			const processor = new AsscinemaProcessor(this);
 
-						const castPath = matched.groups?.filepath
-						const allParents = getParent(currentActiveFile.parent)
-						const searchingPaths = allParents.reverse().map(item => {
-							return item + '/' + castPath
-						})
-						let foundCastPath = ''
-						searchingPaths.forEach(item => {
-							const index = allKnownFilePaths.indexOf(item)
-							if (index !== -1) {
-								foundCastPath = allKnownFilePaths[index]
-							}
-						})
+			this.registerMarkdownCodeBlockProcessor("asciinema", processor.asciinema)
 
-						
-						let jsElementPlayer: HTMLScriptElement
-						const resourcePath = this.app.vault.adapter.getResourcePath(foundCastPath)
-						const scriptText = 'AsciinemaPlayer.create("' + resourcePath + '", document.getElementById("asciinema"));'
-						jsElementPlayer = document.createElement('script')
-						jsElementPlayer.innerText = "console.log('ICI'); " +  scriptText
-
-						el.appendChild(jsElementPlayer)
-
-						// create player
-						img.src = ''
-						img.innerHTML = '' 
-						//img.outerHTML = foundCastPath !== ''
-						//	? `<asciinema-player src="${this.app.vault.adapter.getResourcePath(foundCastPath)}"></asciinema-player>`
-						//	: '<div class="asciinema-player-file-not-found"><span>asciinema-player: ' + castPath +  ' ' + t('FileNotFound') + '</span></div>'
-						img.outerHTML = '<p>NO COUCOU</p><div id="asciinema"></div>'
-						//	`<script>console.log('COUCOU'); AsciinemaPlayer.create("${this.app.vault.adapter.getResourcePath(foundCastPath)}", document.getElementById("asciinema"));</script>`
-						if (foundCastPath !== '') {
-							console.log(`asciinema-player ${this.app.vault.adapter.getResourcePath(foundCastPath)} created...`)
-						}
-					}
-				});
-			});
 		} catch(err) {
 			new Notice('asciinema-player ' + t('EncounteredAnUnkownError') +  '', err)
 		}
@@ -195,6 +160,51 @@ export default class AsciinemaPlayerPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+}
+
+import {MarkdownPostProcessorContext} from "obsidian";
+import { normalizePath } from "obsidian";
+
+interface Processor {
+    asciinema: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<void>;
+}
+
+class AsscinemaProcessor implements Processor {
+
+	plugin: AsciinemaPlayerPlugin
+	count: number = 0;
+
+	constructor(plugin: AsciinemaPlayerPlugin) {
+
+        this.plugin = plugin
+    }
+
+	asciinema = async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
+
+		console.log("+ AsscinemaProcessor")
+
+		const matched = source.match(/(?<filepath>.*\.cast)/)
+		if (matched) {
+
+			this.count += 1
+			let castFile = matched.groups?.filepath as string
+			castFile = normalizePath(castFile)
+			const divId = 'asciinema-new-' + this.count
+
+			let jsElementPlayer: HTMLScriptElement
+			const resourcePath = this.plugin.app.vault.adapter.getResourcePath(castFile)
+			const scriptText = 'AsciinemaPlayer.create("' + resourcePath + '", document.getElementById("' + divId + '"));'
+			jsElementPlayer = document.createElement('script')
+			jsElementPlayer.innerText = "console.log('+ ICI'); " +  scriptText
+
+			let jsElementDiv: HTMLDivElement
+			jsElementDiv = document.createElement('div')
+			jsElementDiv.id = 'asciinema-new-' + this.count
+
+			el.appendChild(jsElementDiv)
+			el.appendChild(jsElementPlayer)
+		}
 	}
 }
 
