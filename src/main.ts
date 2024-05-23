@@ -187,10 +187,21 @@ class AsscinemaProcessor implements Processor {
 		const matched = source.match(/(?<filepath>.*\.cast)/)
 		if (matched) {
 
-			this.count += 1
+			// get file name via regexp result
 			let castFile = matched.groups?.filepath as string
+
+			// if file not present return
 			castFile = normalizePath(castFile)
+			if (this.plugin.app.vault.getFileByPath(castFile) == null) {
+
+				let msg = document.createElement('p')
+				msg.innerText = castFile + ': file not found'
+				el.appendChild(msg)
+				return;
+			}
+
 			const divId = 'asciinema-new-' + this.count
+			
 
 			let jsElementPlayer: HTMLScriptElement
 			const resourcePath = this.plugin.app.vault.adapter.getResourcePath(castFile)
@@ -200,10 +211,12 @@ class AsscinemaProcessor implements Processor {
 
 			let jsElementDiv: HTMLDivElement
 			jsElementDiv = document.createElement('div')
-			jsElementDiv.id = 'asciinema-new-' + this.count
+			jsElementDiv.id = divId
 
 			el.appendChild(jsElementDiv)
 			el.appendChild(jsElementPlayer)
+
+			this.count += 1
 		}
 	}
 }
