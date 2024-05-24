@@ -2,6 +2,9 @@ import { App, Plugin, Notice, TFolder, WorkspaceLeaf, Setting, PluginSettingTab,
 
 import CastView from  './castView'
 import { t } from './locales/helpers';
+import { getAsciinemaPlayerJSContent, getAsciinemaPlayerCSSContent } from './asciinema-assets'
+const zlib = require('zlib'); 
+
 
 const pluginName = 'my-asciinema-plugin'
 
@@ -79,11 +82,10 @@ export default class AsciinemaPlayerPlugin extends Plugin {
 				let playerJSContent = ''
 				let playerCSSContent = ''
 
-				try {
-					this.app.vault.adapter.stat(playerJSPath)
-					playerJSContent = await this.app.vault.adapter.read(playerJSPath)
-					this.app.vault.adapter.stat(playerCSSPath)
-					playerCSSContent = await this.app.vault.adapter.read(playerCSSPath)
+				try {					
+					playerJSContent = getAsciinemaPlayerJSContent()
+					playerCSSContent = getAsciinemaPlayerCSSContent()
+
 				} catch(err) {
 					new Notice('files of obsidian-asciinema-player is corrupted, please reinstall plugin to fix it', err)
 					this.settings.enableOfflineSupport = false
