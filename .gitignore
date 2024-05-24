@@ -20,3 +20,13 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
+
+# excluded files
+tools/asciinema-player.css
+tools/asciinema-player.css.gz
+tools/asciinema-player.js
+tools/asciinema-player.js.gz
+tools/asciinema-player.js.rezip
+tools/asciinema-player.js.txt
+tools/asciinema-player.min.js
+tools/asciinema-player.min.js.gz
