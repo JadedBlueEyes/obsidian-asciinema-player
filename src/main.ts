@@ -1,49 +1,8 @@
-import { App, Plugin, Notice, TFolder, WorkspaceLeaf, Setting, PluginSettingTab, Vault, TFile } from 'obsidian'
+import { App, Plugin, Notice, WorkspaceLeaf, Setting, PluginSettingTab } from 'obsidian'
 
 import CastView from  './castView'
 import { t } from './locales/helpers';
 import { getAsciinemaPlayerJSContent, getAsciinemaPlayerCSSContent } from './asciinema-assets'
-const zlib = require('zlib'); 
-
-
-const pluginName = 'my-asciinema-plugin'
-
-const onlineAsciinemaPlayerScriptURL = 'https://cdnjs.cloudflare.com/ajax/libs/asciinema-player/2.6.1/asciinema-player.min.js'
-const onlineAsciinemaPlayerStyleURL = 'https://cdnjs.cloudflare.com/ajax/libs/asciinema-player/2.6.1/asciinema-player.min.css'
-
-const offlineAsciinemaPlayerScriptName = 'asciinema-player.js'
-const offlineAsciinemaPlayerStyleName = 'asciinema-player.css'
-
-const write = async (content: string, filepath: string, vault: Vault): Promise<void> => {
-	try {
-		const file = await vault.getAbstractFileByPath(filepath)
-		if (file instanceof TFile) {
-			await vault.modify(file as TFile, content)
-		}
-		else await vault.create(filepath, content)
-	} catch (err) {
-		throw err
-	}
-}
-
-const createJSAndCSSFiles = async (pluginPath: string, playerJSPath: string, playerCSSPath: string, vault: Vault) => {
-
-	return
-
-}
-
-const removeJSAndCSSFiles = async (pluginPath: string, playerJSPath: string, playerCSSPath: string, vault: Vault) => {
-	const dirExist = await vault.adapter.exists(pluginPath + '/lib')
-	if (!dirExist) await vault.adapter.mkdir(pluginPath + '/lib')
-
-	try {
-		await vault.adapter.remove(playerCSSPath)
-		await vault.adapter.remove(playerJSPath)
-	} catch(err) {
-		new Notice(t('DeletionFailedNotice').replace('%s', t('EnableOfflineSupport')))
-		throw err
-	} 
-}
 
 interface AsciinemaPlayerSettings {
 	enableOfflineSupport: boolean;
@@ -62,77 +21,48 @@ export default class AsciinemaPlayerPlugin extends Plugin {
 		try {
 			await this.loadSettings();
 			this.addSettingTab(new AsciinemaPlayerSettingTab(this.app, this));
+			
+			// TODO: check if this can be removed ???
 			this.registerView('asciicasts', (leaf: WorkspaceLeaf) => new CastView(leaf))
 			this.registerExtensions(['cast'], 'asciicasts')
 
-			const pluginPath = this.app.vault.configDir + '/plugins/' + pluginName
-			const playerJSPath = pluginPath + '/lib/' + offlineAsciinemaPlayerScriptName
-			const playerCSSPath = pluginPath  + '/lib/'+ offlineAsciinemaPlayerStyleName
-
+			
 			if (!this.settings.firstRun) {
-				await createJSAndCSSFiles(pluginPath, playerJSPath, playerCSSPath, this.app.vault)
 				this.settings.firstRun = true
 				await this.saveSettings()
 			}
+			//
+			// get player assets (js & css)
+			//					
+			const playerJSContent = getAsciinemaPlayerJSContent()
+			const playerCSSContent = getAsciinemaPlayerCSSContent()
 
-			let cssElement: any
-			let jsElement: HTMLScriptElement
-			if (this.settings.enableOfflineSupport) {				
-				// check
-				let playerJSContent = ''
-				let playerCSSContent = ''
-
-				try {					
-					playerJSContent = getAsciinemaPlayerJSContent()
-					playerCSSContent = getAsciinemaPlayerCSSContent()
-
-				} catch(err) {
-					new Notice('files of obsidian-asciinema-player is corrupted, please reinstall plugin to fix it', err)
-					this.settings.enableOfflineSupport = false
-					console.error(err)
-				}
-
-				if (playerJSContent === '' || playerCSSContent === '') {
-					new Notice('files of obsidian-asciinema-player is corrupted, please reinstall plugin to fix it')
-					this.settings.enableOfflineSupport = false
-					await this.saveSettings()
-					return
-				}
-
-				cssElement = document.createElement('style')
-				cssElement.innerHTML = playerCSSContent
-				cssElement.id = 'asciinema-player-css'
-
-				jsElement = document.createElement('script')
-				jsElement.innerHTML = playerJSContent
-				jsElement.id = 'asciinema-player-js'
-			} else {
-				cssElement = document.createElement('link')
-				cssElement = (cssElement as HTMLLinkElement)
-				cssElement.href = onlineAsciinemaPlayerStyleURL
-				cssElement.rel = 'stylesheet'
-				cssElement.id = 'asciinema-player-css'
-
-				jsElement = document.createElement('script')
-				jsElement.src = onlineAsciinemaPlayerScriptURL
-				jsElement.id = 'asciinema-player-js'
+			if (playerJSContent.length === 0 || playerCSSContent.length === 0) {
+				new Notice('files of obsidian-asciinema-player is corrupted, please reinstall plugin to fix it')
+				this.settings.enableOfflineSupport = false
+				await this.saveSettings()
+				return
 			}
 
+			const cssElement = document.createElement('style')
+			cssElement.innerHTML = playerCSSContent.toString('utf-8')
+			cssElement.id = 'asciinema-player-css'
+
+			const jsElement: HTMLScriptElement = document.createElement('script')
+			jsElement.innerHTML = playerJSContent.toString('utf-8')
+			jsElement.id = 'asciinema-player-js'
+			
 			// css
 			const head = document.querySelectorAll('head')
 			if (head[0] && !document.getElementById('asciinema-player-css')) {
 				head[0].appendChild(cssElement)
 			}
 			// body
-			//const body = document.querySelectorAll('body')
-			//if (body[0] && !document.getElementById('asciinema-player-js') && (document.createElement('asciinema-player').constructor === HTMLUnknownElement || document.createElement('asciinema-player').constructor === HTMLElement)) {
-			//	body[0].appendChild(jsElement)
-			//}
 
 			// TODO: Only add script when note cotains asciinema
 			//
 			const scripts = document.querySelectorAll('script')
-			scripts[scripts.length-1].parentNode!.insertBefore(jsElement, scripts[scripts.length-1].nextSibling)
+			scripts[scripts.length-1].parentNode?.insertBefore(jsElement, scripts[scripts.length-1].nextSibling)
 
 			//
 			// registerMarkdownCodeBlockProcessor
@@ -165,7 +95,7 @@ interface Processor {
 class AsscinemaProcessor implements Processor {
 
 	plugin: AsciinemaPlayerPlugin
-	count: number = 0;
+	count = 0;
 
 	constructor(plugin: AsciinemaPlayerPlugin) {
 
@@ -181,15 +111,13 @@ class AsscinemaProcessor implements Processor {
 
 			// get file name via regexp result
 			let castFile = matched.groups?.filepath as string
-			let castOptions = matched.groups?.opt as string
-
-			//const opt = JSON.parse(castOptions)
+			const castOptions = matched.groups?.opt as string
 			
 			// if file not present return
 			castFile = normalizePath(castFile)
 			if (this.plugin.app.vault.getFileByPath(castFile) == null) {
 
-				let msg = document.createElement('p')
+				const msg = document.createElement('p')
 				msg.innerText = castFile + ': file not found'
 				el.appendChild(msg)
 				return;
@@ -198,14 +126,15 @@ class AsscinemaProcessor implements Processor {
 			const divId = 'asciinema-new-' + this.count
 			
 
-			let jsElementPlayer: HTMLScriptElement
+			//let jsElementPlayer: HTMLScriptElement
 			const resourcePath = this.plugin.app.vault.adapter.getResourcePath(castFile)
 			const scriptText = 'AsciinemaPlayer.create("' + resourcePath + '", document.getElementById("' + divId + '"), ' + castOptions + ');'
-			jsElementPlayer = document.createElement('script')
+
+			const jsElementPlayer: HTMLScriptElement = document.createElement('script')
 			jsElementPlayer.innerText = "console.log('+ ICI'); " +  scriptText
 
-			let jsElementDiv: HTMLDivElement
-			jsElementDiv = document.createElement('div')
+	
+			const jsElementDiv: HTMLDivElement = document.createElement('div')
 			jsElementDiv.id = divId
 
 			el.appendChild(jsElementDiv)
@@ -216,15 +145,6 @@ class AsscinemaProcessor implements Processor {
 	}
 }
 
-const getParent = (parent: TFolder) : Array<string> => {
-	if ((parent.path === '/' || parent.path === '\\') || !parent.parent) {
-		return []
-	} else {
-		var parents = getParent(parent.parent)
-		parents.push(parent.path)
-		return parents
-	}
-}
 
 class AsciinemaPlayerSettingTab extends PluginSettingTab {
 	plugin: AsciinemaPlayerPlugin;
@@ -235,7 +155,7 @@ class AsciinemaPlayerSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		let {containerEl} = this;
+		const {containerEl} = this;
 
 		containerEl.empty();
 		containerEl.createEl('h2', {text: t('PluginSettings')});
@@ -247,25 +167,7 @@ class AsciinemaPlayerSettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.enableOfflineSupport)
 				toggle.onChange(async value => {
 					this.plugin.settings.enableOfflineSupport = value;
-					const pluginPath = this.app.vault.configDir + '/plugins/' + pluginName
-					const playerJSPath = pluginPath + '/lib/' + offlineAsciinemaPlayerScriptName
-					const playerCSSPath = pluginPath  + '/lib/'+ offlineAsciinemaPlayerStyleName
-
-					if (value) {	
-						try {
-							await createJSAndCSSFiles(pluginPath, playerJSPath, playerCSSPath, this.app.vault)
-						} catch(err) {
-							console.error(err)
-							return
-						}
-					} else {
-						try {
-							await removeJSAndCSSFiles(pluginPath, playerJSPath, playerCSSPath, this.app.vault)
-						} catch(err) {
-							console.error(err)
-							return
-						}
-					}
+				
 					
 					await this.plugin.saveSettings();
 				})

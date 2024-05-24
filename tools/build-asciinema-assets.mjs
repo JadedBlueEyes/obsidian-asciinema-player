@@ -11,21 +11,12 @@
 //
 // Files are compressed (gzip), result is base64 encoded and stored in ../src/asciinema-assets.ts
 //
-var fs = require('fs');
-var zlib = require('zlib')
+import { readFileSync, writeFileSync } from 'fs';
+import { gzipSync } from 'zlib';
 //
 const debug = true // if set to true will generate intermediate gzip files
 
-// function to encode file data to base64 encoded string
-function base64_encode(file) {
-    // read binary data
-    var originalString = fs.readFileSync(file);
-    // convert binary data to base64 encoded string
-    const base64String = Buffer.from(originalString).toString('base64');
-
-    return base64String;
-}
-
+// function to encode data to base64 encoded string
 function base64_encode_buffer(originalString) {
 
     // convert binary data to base64 encoded string
@@ -34,21 +25,13 @@ function base64_encode_buffer(originalString) {
     return base64String;
 }
 
-// function to create file from base64 encoded string
-function base64_decode(base64str, file) {
-    // create buffer object from base64 encoded string, it is important to tell the constructor that the string is base64 encoded
-    var bitmap = Buffer.from(base64str, 'base64') // .toString('binary');
-    // write buffer to file
-    fs.writeFileSync(file, bitmap);
-    console.log('******** File created from base64 encoded string ********');
-}
-
-
 function zip(file) {
-    var originalString = fs.readFileSync(file)
-    zbuf =  zlib.gzipSync(Buffer.from(originalString))
+    
+    var originalString = readFileSync(file)
+
+    const zbuf =  gzipSync(Buffer.from(originalString))
     if (debug) {
-        fs.writeFileSync(file + '.gz', zbuf)
+        writeFileSync(file + '.gz', zbuf)
     }
     return zbuf
 }
@@ -80,16 +63,16 @@ var base64strJS = base64_encode_buffer(zip(jsFile))
 
 var base64strCSS = base64_encode_buffer(zip(cssFile))
 
-var codePre = "var zlib = require('zlib')\n\
-function unzip(buf) {\n\
-    return zlib.gunzipSync(Buffer.from(buf, 'base64'))\n\
+var codePre = "import { gunzipSync } from 'zlib'\n\
+function unzip(buf: string) {\n\
+    return gunzipSync(Buffer.from(buf, 'base64'))\n\
 }\n"
 
 var codeJS = 'export const getAsciinemaPlayerJSContent = () => {\n    return unzip(`' + base64strJS + '`)\n}\n'
 var codeCSS = 'export const getAsciinemaPlayerCSSContent = () => {\n    return unzip(`' + base64strCSS + '`)\n}\n'
 var code = codePre + codeJS + codeCSS
 
-fs.writeFileSync('../src/asciinema-assets.ts', code);
+writeFileSync('../src/asciinema-assets.ts', code);
 
 console.log('+ Writing file: ../src/asciinema-assets.ts')
 
