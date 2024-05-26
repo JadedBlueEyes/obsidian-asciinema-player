@@ -30,3 +30,4 @@ tools/asciinema-player.js.rezip
 tools/asciinema-player.js.txt
 tools/asciinema-player.min.js
 tools/asciinema-player.min.js.gz
+dist/
