@@ -106,7 +106,7 @@ class AsscinemaProcessor implements Processor {
 
 		console.log("+ AsscinemaProcessor")
 		// (?<filepath>.*\.cast)
-		const matched = source.match(/(?<filepath>.*\.cast)(\s*(?<opt>{[^}]*}))*/)
+		const matched = source.match(/"(?<filepath>.*)"(\s*(?<opt>{[^}]*}))*/)
 		if (matched) {
 
 			// get file name via regexp result
@@ -141,6 +141,11 @@ class AsscinemaProcessor implements Processor {
 			el.appendChild(jsElementPlayer)
 
 			this.count += 1
+		} else {
+			const msg = document.createElement('p')
+			msg.innerText = 'No file found, check syntax: "filename" mind the double quote'
+			el.appendChild(msg)
+			return;
 		}
 	}
 }
