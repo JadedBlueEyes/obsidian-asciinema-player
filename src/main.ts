@@ -164,19 +164,6 @@ class AsciinemaPlayerSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 		containerEl.createEl('h2', {text: t('PluginSettings')});
-
-		new Setting(containerEl)
-			.setName(t('EnableOfflineSupport'))
-			.setDesc(t('OfflineSupportOptionDesp'))
-			.addToggle(toggle => {
-				toggle.setValue(this.plugin.settings.enableOfflineSupport)
-				toggle.onChange(async value => {
-					this.plugin.settings.enableOfflineSupport = value;
-				
-					
-					await this.plugin.saveSettings();
-				})
-			})
 	}
 }
 

@@ -10,7 +10,7 @@ import {
       super(leaf);
     }
 
-    async save(preventReload:boolean=true) {
+    async save(preventReload=true) {
       await super.save();
     }
   
@@ -25,7 +25,7 @@ import {
     clear() {
     }
     
-    async setViewData (data: string, clear: boolean = false) {   
+    async setViewData (data: string, clear = false) {   
       if(clear) this.clear();
     }
   
