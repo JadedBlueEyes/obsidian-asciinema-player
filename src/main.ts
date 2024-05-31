@@ -22,8 +22,7 @@ export default class AsciinemaPlayerPlugin extends Plugin {
 			await this.loadSettings();
 			this.addSettingTab(new AsciinemaPlayerSettingTab(this.app, this));
 			
-			// TODO: check if this can be removed ???
-			this.registerView('asciicasts', (leaf: WorkspaceLeaf) => new CastView(leaf))
+			this.registerView('asciicasts', (leaf: WorkspaceLeaf) => new CastView(leaf, this))
 			this.registerExtensions(['cast'], 'asciicasts')
 
 			
