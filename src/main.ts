@@ -55,6 +55,20 @@ const asciinemaPlayerSettingsDesc = [
 		desc: 'Set this option to true if the playback should start automatically.'
 	},	
 	{
+		key: 'preload',
+		type: 'boolean',
+		default: false,
+		name: 'Preload',
+		desc: 'Set this option to true if the recording should be preloaded on player\'s initialization.'
+	},
+	{
+		key: 'loop',
+		type: 'boolean_number',
+		default: false,
+		name: 'Loop',
+		desc: 'Set this option to either 0 (no loop) or 1 (infinite loop) or a number > 1 if playback should be looped. When set to a number (e.g. 3) then the recording will be re-played given number of times and stopped after that.'
+	},			
+	{
 		key: 'startAt',
 		type: 'string',
 		default: '0',
@@ -67,42 +81,7 @@ const DEFAULT_SETTINGS: Partial<AsciinemaPlayerSettings> = {
 
 }
 
-function convertToText(obj) : string {
-    //create an array that will later be joined into a string.
-    const outString = [];
 
-    //is object
-    //    Both arrays and objects seem to return "object"
-    //    when typeof(obj) is applied to them. So instead
-    //    I am checking to see if they have the property
-    //    join, which normal objects don't have but
-    //    arrays do.
-    if (obj == undefined) {
-		return String(obj);
-    } else if (typeof(obj) == "object" && (obj.join == undefined)) {
-        for (let prop in obj) {
-			if (obj.hasOwnProperty(prop))
-				outString.push(prop + ": " + convertToText(obj[prop]));
-        }
-        return "{" + outString.join(",") + "}";
-    //is array
-    } else if (typeof(obj) == "object" && !(obj.join == undefined)) {
-        for(let prop in obj) {
-            outString.push(convertToText(obj[prop]));
-        }
-        return "[" + outString.join(",") + "]";
-
-    //is function
-    } else if (typeof(obj) == "function") {
-        outString.push(obj.toString())
-
-    //all other values can be done with JSON.stringify
-    } else {
-        outString.push(JSON.stringify(obj))
-    }
-
-    return outString.join(",");
-}
 
 export default class AsciinemaPlayerPlugin extends Plugin {
 
@@ -298,7 +277,7 @@ class AsciinemaPlayerSettingTab extends PluginSettingTab {
 							.setPlaceholder(settingDesc.default.toString())
 							.setValue((settingDesc.key in settings) ? settings[settingDesc.key].toString() : '')
 							.onChange(async (value) => {
-								if (value != null && value != '')
+								if (! isNaN(parseInt(value)))
 									settings[settingDesc.key] = parseInt(value);
 								else
 									delete settings[settingDesc.key]
@@ -342,34 +321,44 @@ class AsciinemaPlayerSettingTab extends PluginSettingTab {
 					break
 				}
 
+				case 'boolean_number': {
+
+					
+					let v = ''
+
+					if (settingDesc.key in settings) {
+						v = settings[settingDesc.key].toString()
+
+						if (v === "true")
+							v = "1"
+						if (v === "false")
+							v = "0"
+
+					}
+
+					new Setting(containerEl)
+						.setName(settingDesc.name)
+						.setDesc(settingDesc.desc)
+						.addText(text => text
+							.setValue(v)
+							.onChange(async (value) => {
+								if (! isNaN(parseInt(value)))
+									if (value === "0")
+										settings[settingDesc.key] = false;
+									else if (value === "1")
+										settings[settingDesc.key] = true;
+									else
+										settings[settingDesc.key] = parseInt(value);
+								else
+									delete settings[settingDesc.key]
+								await plugin.saveSettings();
+							}));
+					break
+				}
 			}
 
 		})
 
-		/*
-		// cols
-		new Setting(containerEl)
-		.setName('Width of player\'s terminal in columns')
-		.setDesc('When not set it defaults to 80 (until asciicast gets loaded) and to terminal width saved in the asciicast file (after it gets loaded). -1 means not set')
-		.addText(text => text
-			.setPlaceholder('Enter your secret')
-			.setValue(this.plugin.settings.cols.toString())
-			.onChange(async (value) => {
-				this.plugin.settings.cols = parseInt(value);
-				await this.plugin.saveSettings();
-			}));
-		// rows
-		new Setting(containerEl)
-		.setName('Height of player\'s terminal in rows (lines).')
-		.setDesc('When not set it defaults to 80 (until asciicast gets loaded) and to terminal width saved in the asciicast file (after it gets loaded). -1 means not set')
-		.addText(text => text
-			.setPlaceholder('Enter your secret')
-			.setValue(this.plugin.settings.rows.toString())
-			.onChange(async (value) => {
-				this.plugin.settings.rows = parseInt(value);
-				await this.plugin.saveSettings();
-			}));
-			*/
 	}
 }
 
