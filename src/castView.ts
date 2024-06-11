@@ -1,56 +1,57 @@
-import { 
-    Plugin,
-    TextFileView, 
-    WorkspaceLeaf, 
-    TFile,
-  } from "obsidian";
-
-  
-
-  export const DEFAULT_DATA = ''
-
-  export default class CastView extends TextFileView {  
-    id: string = (this.leaf as any).id;
+import {
+  Plugin,
+  TextFileView,
+  WorkspaceLeaf,
+  TFile,
+} from "obsidian";
 
 
-    data: string = DEFAULT_DATA
+import AsciinemaPlayerPlugin from "main";
 
-    file: TFile;
-    plugin: Plugin
-  
-    constructor(leaf: WorkspaceLeaf, plugin: Plugin) {
-      super(leaf);
-      this.plugin = plugin
-    }
+export const DEFAULT_DATA = ''
 
-    async save(preventReload=true) {
-      await super.save();
-    }
-  
-    // get the new file content
-    // if drawing is in Text Element Edit Lock, then everything should be parsed and in sync
-    // if drawing is in Text Element Edit Unlock, then everything is raw and parse and so an async function is not required here
-    getViewData () {
-      return this.data;
-    }
-  
-    // clear the view content  
-    clear() {
-      this.containerEl.children[1].empty()
-    }
+export default class CastView extends TextFileView {
+  id: string = (this.leaf as any).id;
 
-    onunload(): void {
-      this.clear()
-    }
-    
-    async setViewData (data: string, clear = false) {   
-      if(clear) this.clear();
-    }
 
-    async onLoadFile(file: TFile): Promise<void> {
-      this.file = file
+  data: string = DEFAULT_DATA
 
-      this.render(file)
+  file: TFile;
+  plugin: AsciinemaPlayerPlugin
+
+  constructor(leaf: WorkspaceLeaf, plugin: AsciinemaPlayerPlugin) {
+    super(leaf);
+    this.plugin = plugin
+  }
+
+  async save(preventReload = true) {
+    await super.save();
+  }
+
+  // get the new file content
+  // if drawing is in Text Element Edit Lock, then everything should be parsed and in sync
+  // if drawing is in Text Element Edit Unlock, then everything is raw and parse and so an async function is not required here
+  getViewData() {
+    return this.data;
+  }
+
+  // clear the view content  
+  clear() {
+    this.containerEl.children[1].empty()
+  }
+
+  onunload(): void {
+    this.clear()
+  }
+
+  async setViewData(data: string, clear = false) {
+    if (clear) this.clear();
+  }
+
+  async onLoadFile(file: TFile): Promise<void> {
+    this.file = file
+
+    this.render(file)
   }
 
   async render(file: TFile) {
@@ -58,7 +59,7 @@ import {
     console.log(file)
 
     const divId = 'asciinema-div'
-    const castOptions = ''
+    const castOptions = this.plugin.settingTab.getOptionsString()
 
     const resourcePath = this.plugin.app.vault.adapter.getResourcePath(file.path)
     const scriptText = 'AsciinemaPlayer.create("' + resourcePath + '", document.getElementById("' + divId + '"), ' + castOptions + ');'
@@ -66,8 +67,8 @@ import {
     const jsElementPlayer: HTMLScriptElement = document.createElement('script')
 
     this.clear()
-    
-    jsElementPlayer.innerText = "console.log('+ ICI'); " +  scriptText
+
+    jsElementPlayer.innerText = "console.log('+ ICI'); " + scriptText
 
 
     const jsElementDiv: HTMLDivElement = document.createElement('div')
@@ -81,21 +82,20 @@ import {
 
 
   }
-  
-    //Compatibility mode with .excalidraw files
-    canAcceptExtension(extension: string) {
-      return extension == "cast";
-    } 
-  
-    // gets the title of the document
-    getDisplayText() {
-      if(this.file) return this.file.basename;
-      else return 'NOFILE';
-    }
-  
-    // the view type name
-    getViewType() {
-      return 'asciicasts';
-    }
+
+  //Compatibility mode with .excalidraw files
+  canAcceptExtension(extension: string) {
+    return extension == "cast";
   }
-  
+
+  // gets the title of the document
+  getDisplayText() {
+    if (this.file) return this.file.basename;
+    else return 'NOFILE';
+  }
+
+  // the view type name
+  getViewType() {
+    return 'asciicasts';
+  }
+}
