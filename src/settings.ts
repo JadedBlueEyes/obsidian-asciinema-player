@@ -75,7 +75,32 @@ const asciinemaPlayerSettingsDesc = [
 		desc: 'The following poster specifications are supported:' + 
                     '<ul><li>npt:1:23 - display recording "frame" at given time using NPT ("Normal Play Time") notation</li>' +
                     '<li>data:text/plain,Poster text - print given text</li></ul>'
-	}		        
+	},
+	{
+		key: 'fit',
+		type: 'string',
+		default: '',
+		name: 'Selects fitting (sizing) behaviour with regards to player\'s container element',
+		desc: 'Possible values:' +
+					'<ul><li>"width" - scale to full width of the container</li>' +
+					'<li>"height" - scale to full height of the container (requires the container element to have fixed height)</li>' +
+					'<li>"both" - scale to either full width or height, maximizing usage of available space (requires the container element to have fixed height)</li>' +
+					'<li>false / "none" - don\'t scale, use fixed size font (also see fontSize option below)</li></ul>' +
+				'Defaults to "width".'
+	},
+	{
+		key: 'controls',
+		type: 'choice',
+		choices: [['true', true], ['false', false], ['auto', 'auto']] ,
+		default: 'auto',
+		name: 'Hide or show user controls, i.e. bottom control bar',
+		desc: 'Valid values:' +
+					'<ul><li>true - always show controls</li>' +
+					'<li>false - never show controls</li>' +
+					'<li>"auto" - show controls on mouse movement, hide on lack of mouse movement' +
+					'</ul>' +
+				'Defaults to "auto".'
+	}			        
 ]
 
 export interface AsciinemaPlayerSettings {
@@ -232,6 +257,33 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 							}));
 					break
 				}
+
+				case 'choice': {
+
+					
+					const  v = (settingDesc.key in settings) ? settings[settingDesc.key].toString() : settingDesc.default;
+					const choices : Record<string, string> = { };
+					const choicesMap = new Map(settingDesc.choices)
+
+					choicesMap.forEach((value, key) => choices[value.toString()] = key)
+
+
+
+					new Setting(containerEl)
+						.setName(settingDesc.name)
+						.setDesc(fragWithHTML(settingDesc.desc))
+						.addDropdown(text => text
+							.addOptions(choices)
+							.setValue(v)
+							.onChange(async (value) => {
+								if (value != null)
+									settings[settingDesc.key] = choicesMap.get(value);
+								else
+									delete settings[settingDesc.key]
+								await this.saveSettings();
+							}));
+					break
+				}				
 			}
 
 		})

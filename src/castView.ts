@@ -1,5 +1,4 @@
 import {
-  Plugin,
   TextFileView,
   WorkspaceLeaf,
   TFile,
