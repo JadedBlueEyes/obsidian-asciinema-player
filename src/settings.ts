@@ -36,7 +36,8 @@ const asciinemaPlayerSettingsDesc = [
 		type: 'boolean_number',
 		default: false,
 		name: 'Loop (loop)',
-		desc: 'Set this option to either 0 (no loop) or 1 (infinite loop) or a number > 1 if playback should be looped. When set to a number (e.g. 3) then the recording will be re-played given number of times and stopped after that.'
+		desc: 'Set this option to either 0 (no loop) or 1 (infinite loop) or a number > 1 if playback should be looped. When set to a number (e.g. 3)' +
+				'then the recording will be re-played given number of times and stopped after that.'
 	},			
 	{
 		key: 'startAt',
@@ -57,7 +58,10 @@ const asciinemaPlayerSettingsDesc = [
 		type: 'number',
 		default: '',
 		name: 'Limit terminal inactivity to a given number of seconds (idleTimeLimit)',
-		desc: 'For example, when set to 2 any inactivity (pauses) longer than 2 seconds will be "compressed" to 2 seconds'
+		desc: 'For example, when set to 2 any inactivity (pauses) longer than 2 seconds will be "compressed" to 2 seconds' +
+			'Defaults to:' +
+			'<ul><li>idle_time_limit from asciicast header (saved when passing -i <sec> to asciinema rec),</li>' +
+			'<li>no limit, when it was not specified at the time of recording.</li></ul>'
 	},    
     {
 		key: 'theme',
@@ -65,7 +69,8 @@ const asciinemaPlayerSettingsDesc = [
 		default: '',
 		name: 'Terminal color theme (theme)',
 		desc: 'See <a href="https://docs.asciinema.org/manual/player/themes/">Terminal themes</a> for a list of available built-in themes, and how to use a custom theme<br/>' + 
-                'If this options is not specified, the player uses the original (recorded) theme when available; otherwise, it uses the asciinema theme'
+                'If this options is not specified, the player uses the original (recorded) theme when available; otherwise, it uses the asciinema theme' +
+				'<br/>(eg.: dracula)'
 	},  
     {
 		key: 'poster',
@@ -78,9 +83,10 @@ const asciinemaPlayerSettingsDesc = [
 	},
 	{
 		key: 'fit',
-		type: 'string',
-		default: '',
-		name: 'Selects fitting (sizing) behaviour with regards to player\'s container element',
+		type: 'choice',
+		choices: [['width', 'width'], ['height', 'height'], ['both', 'both'], ['none', 'none']] ,
+		default: 'width',
+		name: 'Selects fitting (sizing) behaviour with regards to player\'s container element (fit)',
 		desc: 'Possible values:' +
 					'<ul><li>"width" - scale to full width of the container</li>' +
 					'<li>"height" - scale to full height of the container (requires the container element to have fixed height)</li>' +
@@ -93,14 +99,47 @@ const asciinemaPlayerSettingsDesc = [
 		type: 'choice',
 		choices: [['true', true], ['false', false], ['auto', 'auto']] ,
 		default: 'auto',
-		name: 'Hide or show user controls, i.e. bottom control bar',
+		name: 'Hide or show user controls, i.e. bottom control bar (controls)',
 		desc: 'Valid values:' +
 					'<ul><li>true - always show controls</li>' +
 					'<li>false - never show controls</li>' +
 					'<li>"auto" - show controls on mouse movement, hide on lack of mouse movement' +
 					'</ul>' +
 				'Defaults to "auto".'
-	}			        
+	},
+	{
+		key: 'pauseOnMarkers',
+		type: 'boolean',
+		default: false,
+		name: 'Pause on markers (pauseOnMarkers)',
+		desc: 'If pauseOnMarkers is set to true, the playback automatically pauses on every marker encountered and it can be resumed by either pressing the space bar key or ' + 
+				'clicking on the play button. The resumed playback continues until the next marker is encountered.' +
+				'<br/>This option can be useful in e.g. live demos: you can add markers to a recording, then play it back during presentation, and have the player stop wherever' +
+				'you want to explain terminal contents in more detail.' +
+				'<br/>Defaults to false.'
+	},	
+	{
+		key: 'terminalFontSize',
+		type: 'string',
+		default: 'small',
+		name: 'Size of the terminal font (terminalFontSize)',
+		desc: 'Possible values:' + 
+			'<ul><li>any valid CSS font-size value, e.g. "15px"</li>' +
+			'<li>"small"</li>' +
+			'<li>"medium"</li>' +
+			'<li>"big"</li></ul>' +
+			'<br/>Defaults to "small".' +
+			'<br/>WARNING: This option is effective only when fit: false option is specified as well (see above).'
+	},			
+	{
+		key: 'terminalLineHeight',
+		type: 'number',
+		default: 1.33333333,
+		name: 'Terminal line height override (terminalLineHeight).',
+		desc: 'The value is relative to the font size (like em unit in CSS). For example a value of 1' + 
+				'makes the line height equal to the font size, leaving no space between lines. A value of 2 makes it double the font size, etc.' +
+				'<br/>Defaults to 1.33333333'
+	},			        
 ]
 
 export interface AsciinemaPlayerSettings {
@@ -140,8 +179,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 
         let str = '{\n'
         for (const [key, value] of Object.entries(this.settings)) {
-            //str += key + ': ' + value + ',\n'
-            //console.log(`${key}: ${value}`);
+
             if (typeof value === "string") {
                 str += key + ': "' + value + '",\n'
             } else {
@@ -156,17 +194,25 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
     }    
 
 	display(): void {
-		const {containerEl} = this;
 
+		const {containerEl} = this;
 		const settings = this.settings
         
-
 		containerEl.empty();
 		containerEl.createEl('h2', {text: t('PluginSettings')});
 
 		asciinemaPlayerSettingsDesc.forEach(settingDesc => {
 
+			let setting : number | boolean | string
+
+			if (settings[settingDesc.key] !== undefined)
+				setting = settings[settingDesc.key] as number | boolean | string
+			else
+				setting	= settingDesc.default
+
 			//console.log(settingDesc)
+			const settingString : string = setting.toString()
+
 
 			switch (settingDesc.type) {
 
@@ -177,7 +223,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 						.setDesc(fragWithHTML(settingDesc.desc))
 						.addText(text => text
 							.setPlaceholder(settingDesc.default.toString())
-							.setValue((settingDesc.key in settings) ? settings[settingDesc.key].toString() : '')
+							.setValue(settingString)
 							.onChange(async (value) => {
 								if (! isNaN(parseInt(value)))
 									settings[settingDesc.key] = parseInt(value);
@@ -195,7 +241,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 						.setDesc(fragWithHTML(settingDesc.desc))
 						.addText(text => text
 							.setPlaceholder(settingDesc.default.toString())
-							.setValue((settingDesc.key in settings) ? settings[settingDesc.key].toString() : '')
+							.setValue(settingString)
 							.onChange(async (value) => {
 								if (value != null && value != '')
 									settings[settingDesc.key] = value;
@@ -212,7 +258,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 						.setName(settingDesc.name)
 						.setDesc(fragWithHTML(settingDesc.desc))
 						.addToggle(text => text
-							.setValue(settings[settingDesc.key] as boolean)
+							.setValue(setting as boolean)
 							.onChange(async (value) => {
 								if (value != null)
 									settings[settingDesc.key] = value;
@@ -224,19 +270,13 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 				}
 
 				case 'boolean_number': {
-
 					
-					let v = ''
-
-					if (settingDesc.key in settings) {
-						v = settings[settingDesc.key].toString()
-
-						if (v === "true")
-							v = "1"
-						if (v === "false")
-							v = "0"
-
-					}
+					let v = settingString
+					
+					if (v === "true")
+						v = "1"
+					if (v === "false")
+						v = "0"
 
 					new Setting(containerEl)
 						.setName(settingDesc.name)
@@ -260,21 +300,20 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 
 				case 'choice': {
 
-					
-					const  v = (settingDesc.key in settings) ? settings[settingDesc.key].toString() : settingDesc.default;
 					const choices : Record<string, string> = { };
-					const choicesMap = new Map(settingDesc.choices)
+					const choicesMap : Map<string, string | number | boolean> = new Map()
+
+					if (settingDesc.choices !== undefined)
+						settingDesc.choices.forEach(choice => { choicesMap.set(choice[0] as string, choice[1])})
 
 					choicesMap.forEach((value, key) => choices[value.toString()] = key)
-
-
 
 					new Setting(containerEl)
 						.setName(settingDesc.name)
 						.setDesc(fragWithHTML(settingDesc.desc))
 						.addDropdown(text => text
 							.addOptions(choices)
-							.setValue(v)
+							.setValue(settingString)
 							.onChange(async (value) => {
 								if (value != null)
 									settings[settingDesc.key] = choicesMap.get(value);
