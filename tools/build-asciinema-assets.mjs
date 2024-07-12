@@ -37,11 +37,10 @@ function zip(file) {
 }
 
 
-if (!process.argv.length === 4) {
-    console.error(process.argv.length)
+if (!(process.argv.length === 4)) {
     console.error('Expected 2 argument!: <js script file> <css file>');
     process.exit(1);
- } 
+} 
 
  const jsFile = process.argv[2]
  const cssFile = process.argv[3]
