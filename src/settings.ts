@@ -158,7 +158,7 @@ const fragWithHTML = (html: string) =>
 
 export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 	plugin: Plugin;
-    settings: Partial<AsciinemaPlayerSettings> = {}
+  settings: Partial<AsciinemaPlayerSettings> = {}
 
 	constructor(app: App, plugin: Plugin) {
 		super(app, plugin);
@@ -175,23 +175,6 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 		await this.plugin.saveData(this.settings);
 	}    
 
-    getOptionsString(): string {
-
-        let str = '{\n'
-        for (const [key, value] of Object.entries(this.settings)) {
-
-            if (typeof value === "string") {
-                str += key + ': "' + value + '",\n'
-            } else {
-                str += key + ': ' + value + ',\n'
-            }
-        }
-        str += '\n}'
-
-        console.log(str)
-
-        return str
-    }    
 
 	display(): void {
 

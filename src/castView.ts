@@ -1,30 +1,30 @@
 import {
-  TextFileView,
+  FileView,
   WorkspaceLeaf,
   TFile,
+  HoverParent,
+  HoverPopover,
 } from "obsidian";
 
-
 import AsciinemaPlayerPlugin from "main";
-
+import * as AsciinemaPlayer from 'asciinema-player';
 export const DEFAULT_DATA = ''
 
-export default class CastView extends TextFileView {
+export default class CastView extends FileView implements HoverParent {
   id: string = (this.leaf as any).id;
-
+  allowNoFile = false;
 
   data: string = DEFAULT_DATA
 
   file: TFile;
   plugin: AsciinemaPlayerPlugin
 
+  hoverPopover: HoverPopover | null;
+
+  playerInstance: any;
   constructor(leaf: WorkspaceLeaf, plugin: AsciinemaPlayerPlugin) {
     super(leaf);
     this.plugin = plugin
-  }
-
-  async save(preventReload = true) {
-    await super.save();
   }
 
   // get the new file content
@@ -36,6 +36,7 @@ export default class CastView extends TextFileView {
 
   // clear the view content  
   clear() {
+    this?.playerInstance?.dispose()
     this.containerEl.children[1].empty()
   }
 
@@ -53,36 +54,22 @@ export default class CastView extends TextFileView {
     this.render(file)
   }
 
+  async onUnloadFile(file: TFile): Promise<void> {
+    this.clear()
+  }
+
   async render(file: TFile) {
-
-    console.log(file)
-
-    const divId = 'asciinema-div'
-    const castOptions = this.plugin.settingTab.getOptionsString()
+    const castOptions = this.plugin.settingTab.settings
 
     const resourcePath = this.plugin.app.vault.adapter.getResourcePath(file.path)
-    const scriptText = 'AsciinemaPlayer.create("' + resourcePath + '", document.getElementById("' + divId + '"), ' + castOptions + ');'
 
-    const jsElementPlayer: HTMLScriptElement = document.createElement('script')
+    const playerDiv: HTMLDivElement = document.createElement('div')
 
-    this.clear()
-
-    jsElementPlayer.innerText = "console.log('+ ICI'); " + scriptText
-
-
-    const jsElementDiv: HTMLDivElement = document.createElement('div')
-    jsElementDiv.id = divId
-
-    //el.appendChild(jsElementDiv)
-    //el.appendChild(jsElementPlayer)
-
-    this.containerEl.children[1].appendChild(jsElementDiv)
-    this.containerEl.children[1].appendChild(jsElementPlayer)
-
+    this.containerEl.children[1].appendChild(playerDiv)
+    this.playerInstance = AsciinemaPlayer.create(resourcePath, playerDiv, castOptions);
 
   }
 
-  //Compatibility mode with .excalidraw files
   canAcceptExtension(extension: string) {
     return extension == "cast";
   }
