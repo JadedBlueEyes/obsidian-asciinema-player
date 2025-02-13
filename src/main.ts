@@ -24,16 +24,6 @@ export default class AsciinemaPlayerPlugin extends Plugin {
         defaultMod: false
       })
 
-      // CSS
-
-      // const cssElement = document.createElement('style')
-      // cssElement.id = 'asciinema-player-css'
-      // cssElement.textContent = playerStyles
-      // const head = document.querySelectorAll('head')
-      // if (head[0] && !document.getElementById('asciinema-player-css')) {
-      //   head[0].appendChild(cssElement)
-      // }
-
       this.registerExtensions(['cast'], 'asciicasts')
       console.log("loaded asciinema-player")
 
