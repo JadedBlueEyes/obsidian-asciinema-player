@@ -4,3 +4,4 @@ This is a [Obsidian](https://obsidian.md) plugin which supports viewing [asciica
 
 This was originally based on [dkleinbe's plugin](https://github.com/dkleinbe/obsidian-asciinema-player), in turn based on [nekomeowww's plugin](https://github.com/nekomeowww/obsidian-asciinema-player)
 
+Usage: Open a `.cast` file in Obsidian, and it will be rendered as an asciinema player.
