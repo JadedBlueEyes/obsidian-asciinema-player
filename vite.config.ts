@@ -14,10 +14,6 @@ export default defineConfig(async ({ mode }) => {
             src: "./manifest.json",
             dest: ".",
           },
-          {
-            src: "./versions.json",
-            dest: ".",
-          },
         ],
       }),
     ],
