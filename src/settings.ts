@@ -149,7 +149,8 @@ export interface AsciinemaPlayerSettings {
 
 
 const DEFAULT_SETTINGS: Partial<AsciinemaPlayerSettings> = {
-
+  preload: true,
+  fit: 'both'
 }
 
 const fragWithHTML = (html: string) =>

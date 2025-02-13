@@ -6,7 +6,7 @@ import {
   HoverPopover,
 } from "obsidian";
 
-import AsciinemaPlayerPlugin from "main";
+import AsciinemaPlayerPlugin from "./main";
 import * as AsciinemaPlayer from 'asciinema-player';
 export const DEFAULT_DATA = ''
 
@@ -16,10 +16,10 @@ export default class CastView extends FileView implements HoverParent {
 
   data: string = DEFAULT_DATA
 
-  file: TFile;
+  file!: TFile;
   plugin: AsciinemaPlayerPlugin
 
-  hoverPopover: HoverPopover | null;
+  hoverPopover: HoverPopover | null = null;
 
   playerInstance: any;
   constructor(leaf: WorkspaceLeaf, plugin: AsciinemaPlayerPlugin) {
@@ -63,10 +63,7 @@ export default class CastView extends FileView implements HoverParent {
 
     const resourcePath = this.plugin.app.vault.adapter.getResourcePath(file.path)
 
-    const playerDiv: HTMLDivElement = document.createElement('div')
-
-    this.containerEl.children[1].appendChild(playerDiv)
-    this.playerInstance = AsciinemaPlayer.create(resourcePath, playerDiv, castOptions);
+    this.playerInstance = AsciinemaPlayer.create(resourcePath, this.containerEl.children[1], castOptions);
 
   }
 
