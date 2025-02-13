@@ -3,16 +3,16 @@ import { Plugin, Notice, WorkspaceLeaf } from 'obsidian'
 import CastView from './castView'
 import { t } from './locales/helpers';
 import { AsciinemaPlayerSettings, AsciinemaPlayerSettingTab } from './settings'
-import playerStyles from 'asciinema-player/dist/bundle/asciinema-player.css'
+import 'asciinema-player/dist/bundle/asciinema-player.css'
+import './styles.css'
 
 export default class AsciinemaPlayerPlugin extends Plugin {
 
-  settings: AsciinemaPlayerSettings;
-  settingTab: AsciinemaPlayerSettingTab;
+  settings!: AsciinemaPlayerSettings;
+  settingTab!: AsciinemaPlayerSettingTab;
 
   async onload() {
     try {
-
       this.settingTab = new AsciinemaPlayerSettingTab(this.app, this)
       this.settings = await this.settingTab.loadSettings();
       this.addSettingTab(this.settingTab);
@@ -26,13 +26,13 @@ export default class AsciinemaPlayerPlugin extends Plugin {
 
       // CSS
 
-      const cssElement = document.createElement('style')
-      cssElement.id = 'asciinema-player-css'
-      cssElement.textContent = playerStyles
-      const head = document.querySelectorAll('head')
-      if (head[0] && !document.getElementById('asciinema-player-css')) {
-        head[0].appendChild(cssElement)
-      }
+      // const cssElement = document.createElement('style')
+      // cssElement.id = 'asciinema-player-css'
+      // cssElement.textContent = playerStyles
+      // const head = document.querySelectorAll('head')
+      // if (head[0] && !document.getElementById('asciinema-player-css')) {
+      //   head[0].appendChild(cssElement)
+      // }
 
       this.registerExtensions(['cast'], 'asciicasts')
       console.log("loaded asciinema-player")
@@ -43,7 +43,7 @@ export default class AsciinemaPlayerPlugin extends Plugin {
       }
 
     } catch (err) {
-      new Notice('asciinema-player ' + t('EncounteredAnUnkownError') + '', err)
+      new Notice('asciinema-player ' + t('EncounteredAnUnkownError') + '' + err)
     }
   }
 

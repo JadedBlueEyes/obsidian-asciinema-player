@@ -1,11 +1,10 @@
 {
-	"id": "my-asciinema-plugin",
-	"name": "Asciinema Plugin",
-	"version": "0.5.0",
-	"minAppVersion": "0.15.0",
-	"description": "Asciinema file player.",
-	"author": "Justme",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"id": "obsidian-asciinema-player",
+	"name": "Asciinema Player",
+	"version": "0.0.1",
+	"minAppVersion": "1.5.0",
+	"description": "Asciinema cast player",
+	"author": "JadedBlueEyes",
+	"authorUrl": "https://jade.ellis.link",
 	"isDesktopOnly": false
 }

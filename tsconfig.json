@@ -1,24 +1,19 @@
 {
-  "compilerOptions": {
-    "baseUrl": "./src",
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "module": "ESNext",
-    "target": "ES2018",
-    "allowJs": true,
-    "noImplicitAny": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "isolatedModules": true,
-	"strictNullChecks": true,
-    "lib": [
-      "DOM",
-      "ES5",
-      "ES6",
-      "ES7"
-    ]
-  },
-  "include": [
-    "**/*.ts"
-  ]
+	"compilerOptions": {
+		"baseUrl": ".",
+		"noImplicitAny": true,
+		"strict": true,
+		"target": "ES2018",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"strictNullChecks": true,
+		"paths": {
+			"@/*": ["./src/*"],
+			"obsidian-typings/implementations": [
+				"./node_modules/obsidian-typings/dist/implementations.d.ts",
+				"./node_modules/obsidian-typings/dist/implementations.cjs"
+			]
+		},
+		"types": ["obsidian-typings"]
+	}
 }

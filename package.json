@@ -1,25 +1,28 @@
 {
-	"name": "my-asciinema-plugin",
-	"version": "0.5.0",
-	"description": "Asciinema file player",
-	"main": "main.js",
+	"name": "obsidian-asciinema-player",
+	"version": "0.0.1",
+	"description": "Asciinema cast player",
+	"main": "dist/main.js",
 	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"dev": "vite build --watch --mode=development",
+		"build": "vite build",
+		"release": "git tag -a %npm_config_tag% -m '%npm_config_tag%' && git push origin %npm_config_tag%",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^16.11.6",
+		"@types/node": "^16.18.126",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
-		"esbuild": "0.17.3",
 		"obsidian": "latest",
+		"obsidian-typings": "^2.21.3",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4"
+		"typescript": "4.7.4",
+		"vite": "^6.1.0",
+		"vite-plugin-static-copy": "^2.2.0"
 	},
 	"dependencies": {
 		"asciinema-player": "3.6.3",
