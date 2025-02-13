@@ -8,5 +8,6 @@ If your plugin does not need CSS, delete this file.
 */
 
 .workspace-leaf-content[data-type="asciicasts"] .view-content {
+  /* Allow selecting terminal text */
   user-select: text;
 }
