@@ -1,8 +1,21 @@
 import { App, Plugin, Setting, PluginSettingTab } from 'obsidian'
 import { t } from './locales/helpers';
 
+interface SettingDescription {
+  key: string;
+  type: 'number' | 'string' | 'boolean' | 'boolean_number' | 'choice';
+  default: any;
+  name: string;
+  desc: string | {
+      text?: string;
+      list?: string[];
+      link?: string;
+      footer?: string;
+  };
+  choices?: [string, string | boolean | number][];
+}
 
-const asciinemaPlayerSettingsDesc = [
+const asciinemaPlayerSettingsDesc: SettingDescription[] = [
 	{
 		key: 'cols',
 		type: 'number',
@@ -44,7 +57,14 @@ const asciinemaPlayerSettingsDesc = [
 		type: 'string',
 		default: '0',
 		name: 'Start the playback at a given time (startAt)',
-		desc: 'Supported formats: 123 (number of seconds) | "2:03" ("mm:ss") | "1:02:03" ("hh:mm:ss")'
+		desc: {
+			text: 'Supported formats:',
+			list: [
+				'123 (number of seconds)',
+				'2:03 ("mm:ss")',
+				'1:02:03 ("hh:mm:ss")'
+			]
+		}
 	},
 	{
 		key: 'speed',
@@ -58,28 +78,36 @@ const asciinemaPlayerSettingsDesc = [
 		type: 'number',
 		default: '',
 		name: 'Limit terminal inactivity to a given number of seconds (idleTimeLimit)',
-		desc: 'For example, when set to 2 any inactivity (pauses) longer than 2 seconds will be "compressed" to 2 seconds' +
-			'Defaults to:' +
-			'<ul><li>idle_time_limit from asciicast header (saved when passing -i <sec> to asciinema rec),</li>' +
-			'<li>no limit, when it was not specified at the time of recording.</li></ul>'
+		desc: {
+			text: 'For example, when set to 2 any inactivity (pauses) longer than 2 seconds will be "compressed" to 2 seconds. Defaults to:',
+			list: [
+				'idle_time_limit from asciicast header (saved when passing -i <sec> to asciinema rec)',
+				'no limit, when it was not specified at the time of recording.'
+			]
+		}
 	},    
     {
 		key: 'theme',
 		type: 'string',
 		default: '',
 		name: 'Terminal color theme (theme)',
-		desc: 'See <a href="https://docs.asciinema.org/manual/player/themes/">Terminal themes</a> for a list of available built-in themes, and how to use a custom theme<br/>' + 
-                'If this options is not specified, the player uses the original (recorded) theme when available; otherwise, it uses the asciinema theme' +
-				'<br/>(eg.: dracula)'
+		desc: {
+			text: 'See Terminal themes for a list of available built-in themes, and how to use a custom theme. If this options is not specified, the player uses the original (recorded) theme when available; otherwise, it uses the asciinema theme (eg.: dracula)',
+			link: 'https://docs.asciinema.org/manual/player/themes/'
+		}
 	},  
     {
 		key: 'poster',
 		type: 'string',
 		default: '',
 		name: 'Poster (a preview frame) to display until the playback is started (poster)',
-		desc: 'The following poster specifications are supported:' + 
-                    '<ul><li>npt:1:23 - display recording "frame" at given time using NPT ("Normal Play Time") notation</li>' +
-                    '<li>data:text/plain,Poster text - print given text</li></ul>'
+		desc: {
+			text: 'The following poster specifications are supported:',
+			list: [
+				'npt:1:23 - display recording "frame" at given time using NPT ("Normal Play Time") notation',
+				'data:text/plain,Poster text - print given text'
+			]
+		}
 	},
 	{
 		key: 'fit',
@@ -87,58 +115,71 @@ const asciinemaPlayerSettingsDesc = [
 		choices: [['width', 'width'], ['height', 'height'], ['both', 'both'], ['none', 'none']] ,
 		default: 'width',
 		name: 'Selects fitting (sizing) behaviour with regards to player\'s container element (fit)',
-		desc: 'Possible values:' +
-					'<ul><li>"width" - scale to full width of the container</li>' +
-					'<li>"height" - scale to full height of the container (requires the container element to have fixed height)</li>' +
-					'<li>"both" - scale to either full width or height, maximizing usage of available space (requires the container element to have fixed height)</li>' +
-					'<li>false / "none" - don\'t scale, use fixed size font (also see fontSize option below)</li></ul>' +
-				'Defaults to "width".'
+		desc: {
+			text: 'Possible values:',
+			list: [
+				'"width" - scale to full width of the container',
+				'"height" - scale to full height of the container (requires the container element to have fixed height)',
+				'"both" - scale to either full width or height, maximizing usage of available space (requires the container element to have fixed height)',
+				'false / "none" - don\'t scale, use fixed size font (also see fontSize option below)'
+			],
+			footer: 'Defaults to "width".'
+		}
 	},
 	{
 		key: 'controls',
 		type: 'choice',
-		choices: [['true', true], ['false', false], ['auto', 'auto']] ,
+		choices: [['true', true], ['false', false], ['auto', 'auto']],
 		default: 'auto',
 		name: 'Hide or show user controls, i.e. bottom control bar (controls)',
-		desc: 'Valid values:' +
-					'<ul><li>true - always show controls</li>' +
-					'<li>false - never show controls</li>' +
-					'<li>"auto" - show controls on mouse movement, hide on lack of mouse movement' +
-					'</ul>' +
-				'Defaults to "auto".'
+		desc: {
+			text: 'Valid values:',
+			list: [
+				'true - always show controls',
+				'false - never show controls',
+				'"auto" - show controls on mouse movement, hide on lack of mouse movement'
+			],
+			footer: 'Defaults to "auto".'
+		}
 	},
 	{
 		key: 'pauseOnMarkers',
 		type: 'boolean',
 		default: false,
 		name: 'Pause on markers (pauseOnMarkers)',
-		desc: 'If pauseOnMarkers is set to true, the playback automatically pauses on every marker encountered and it can be resumed by either pressing the space bar key or ' + 
-				'clicking on the play button. The resumed playback continues until the next marker is encountered.' +
-				'<br/>This option can be useful in e.g. live demos: you can add markers to a recording, then play it back during presentation, and have the player stop wherever' +
-				'you want to explain terminal contents in more detail.' +
-				'<br/>Defaults to false.'
+		desc: {
+			text: 'If pauseOnMarkers is set to true, the playback automatically pauses on every marker encountered and it can be resumed by either pressing the space bar key or clicking on the play button. The resumed playback continues until the next marker is encountered.',
+			list: [
+				'This option can be useful in e.g. live demos: you can add markers to a recording, then play it back during presentation, and have the player stop wherever you want to explain terminal contents in more detail.'
+			],
+			footer: 'Defaults to false.'
+		}
 	},	
 	{
 		key: 'terminalFontSize',
 		type: 'string',
 		default: 'small',
 		name: 'Size of the terminal font (terminalFontSize)',
-		desc: 'Possible values:' + 
-			'<ul><li>any valid CSS font-size value, e.g. "15px"</li>' +
-			'<li>"small"</li>' +
-			'<li>"medium"</li>' +
-			'<li>"big"</li></ul>' +
-			'<br/>Defaults to "small".' +
-			'<br/>WARNING: This option is effective only when fit: false option is specified as well (see above).'
+		desc: {
+			text: 'Possible values:',
+			list: [
+				'any valid CSS font-size value, e.g. "15px"',
+				'"small"',
+				'"medium"',
+				'"big"'
+			],
+			footer: 'Defaults to "small". WARNING: This option is effective only when fit: false option is specified as well (see above).'
+		}
 	},			
 	{
 		key: 'terminalLineHeight',
 		type: 'number',
 		default: 1.33333333,
 		name: 'Terminal line height override (terminalLineHeight).',
-		desc: 'The value is relative to the font size (like em unit in CSS). For example a value of 1' + 
-				'makes the line height equal to the font size, leaving no space between lines. A value of 2 makes it double the font size, etc.' +
-				'<br/>Defaults to 1.33333333'
+		desc: {
+			text: 'The value is relative to the font size (like em unit in CSS). For example a value of 1 makes the line height equal to the font size, leaving no space between lines. A value of 2 makes it double the font size, etc.',
+			footer: 'Defaults to 1.33333333'
+		}
 	},			        
 ]
 
@@ -153,9 +194,39 @@ const DEFAULT_SETTINGS: Partial<AsciinemaPlayerSettings> = {
   fit: 'both'
 }
 
-const fragWithHTML = (html: string) =>
-    createFragment((frag) => (frag.createDiv().innerHTML = html));
-  
+const createDescriptionFragment = (desc: any) => {
+    return createFragment(frag => {
+        const container = frag.createDiv();
+        
+        if (typeof desc === 'string') {
+            container.createDiv({ text: desc });
+            return;
+        }
+
+        if (desc.text) {
+            container.createDiv({ text: desc.text });
+        }
+
+        if (desc.list) {
+            const ul = container.createEl('ul');
+            desc.list.forEach((item: string) => {
+                ul.createEl('li', { text: item });
+            });
+        }
+
+        if (desc.link) {
+            container.createEl('a', { 
+                text: desc.link,
+                href: desc.link,
+                cls: 'external-link'
+            });
+        }
+
+        if (desc.footer) {
+            container.createDiv({ text: desc.footer });
+        }
+    });
+};
 
 export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 	plugin: Plugin;
@@ -204,7 +275,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 					
 					new Setting(containerEl)
 						.setName(settingDesc.name)
-						.setDesc(fragWithHTML(settingDesc.desc))
+						.setDesc(createDescriptionFragment(settingDesc.desc))
 						.addText(text => text
 							.setPlaceholder(settingDesc.default.toString())
 							.setValue(settingString)
@@ -222,7 +293,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 					
 					new Setting(containerEl)
 						.setName(settingDesc.name)
-						.setDesc(fragWithHTML(settingDesc.desc))
+						.setDesc(createDescriptionFragment(settingDesc.desc))
 						.addText(text => text
 							.setPlaceholder(settingDesc.default.toString())
 							.setValue(settingString)
@@ -240,7 +311,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 					
 					new Setting(containerEl)
 						.setName(settingDesc.name)
-						.setDesc(fragWithHTML(settingDesc.desc))
+						.setDesc(createDescriptionFragment(settingDesc.desc))
 						.addToggle(text => text
 							.setValue(setting as boolean)
 							.onChange(async (value) => {
@@ -264,7 +335,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 
 					new Setting(containerEl)
 						.setName(settingDesc.name)
-						.setDesc(fragWithHTML(settingDesc.desc))
+						.setDesc(createDescriptionFragment(settingDesc.desc))
 						.addText(text => text
 							.setValue(v)
 							.onChange(async (value) => {
@@ -294,7 +365,7 @@ export class AsciinemaPlayerSettingTab extends PluginSettingTab {
 
 					new Setting(containerEl)
 						.setName(settingDesc.name)
-						.setDesc(fragWithHTML(settingDesc.desc))
+						.setDesc(createDescriptionFragment(settingDesc.desc))
 						.addDropdown(text => text
 							.addOptions(choices)
 							.setValue(settingString)
